@@ -1,6 +1,11 @@
 {
   "name": "magic-square-dance",
   "version": "0.0.0",
+  "description": "«Magic Square Dance» simulator, as described in the Mathologer video: https://www.youtube.com/watch?v=Yy7Q8IWNfHM&t=2146s&ab_channel=Mathologer",
+  "author": "Charly Marchiaro",
+  "email": "carlosmarchiaro@gmail.com",
+  "url": "https://twitter.com/charlymarchiaro",
+  "license": "MIT",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

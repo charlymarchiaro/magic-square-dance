@@ -1,5 +1,12 @@
-# MagicSquareDance
+# Magic Square Dance
 
+### _Magic Square Dance_ simulator, as described in the Mathologer video:
+ \
+[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/Yy7Q8IWNfHM/0.jpg)](http://www.youtube.com/watch?v=Yy7Q8IWNfHM)
+
+# 
+
+## Project details
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 10.1.4.
 
 ## Development server
