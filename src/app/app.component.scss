@@ -4,14 +4,29 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 57px;
-    padding: 10px 20px;
+    height: 60px;
+    padding: 5px 12px;
     background-color: #1b7f9b;
-    color: white;
     box-sizing: border-box;
+    align-items: center;
+
+    #logo-frame {
+        background-color: #0e006147;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        box-sizing: border-box;
+        margin-right: 11px;
+        line-height: 44px;
+    }
 
     h1 {
-        font-size: 27px;
+        font-size: 22px;
+        margin: 0;
+        color: white;
     }
 }
 
