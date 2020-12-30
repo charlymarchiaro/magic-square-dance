@@ -2,7 +2,25 @@
 
   <div
     id="control-panel"
-    [ngStyle]="controlPanelStyle"></div>
+    [ngStyle]="controlPanelStyle">
+
+    <div id="simulation-speed">
+
+      <mat-label>Simul. speed:</mat-label>
+      <mat-slider
+        #simulationSpeedSlider
+        color="primary"
+        [min]="minSimulationSpeed"
+        [max]="maxSimulationSpeed"
+        step="0.1"
+        [value]="simulationSpeed"
+        (change)="onSimulationSpeedSliderChange($event.value)"></mat-slider>
+      <div>
+        {{simulationSpeedSlider.value |number:'1.1'}}
+      </div>
+    </div>
+
+  </div>
 
   <div id="phaser-canvas"></div>
 

@@ -1,12 +1,24 @@
-import { TileDirection, TileState, Vector2 } from "./common";
+import { TileDirection, TileState, Vector2 } from './common';
 import { BaseTileTransition } from './transition/base.tile-transition';
+import { GridCellModel } from './grid-cell.model';
+
+
+export interface OccupGridCells {
+  centerPos1: Vector2;
+  centerPos2: Vector2;
+}
 
 
 export class TileModel {
 
   private state: TileState;
 
+  protected directionVersor: Vector2;
+
   private transition: BaseTileTransition;
+
+  // Center position after transition ends
+  private destCenterPos: Vector2;
 
 
   constructor(
@@ -15,6 +27,8 @@ export class TileModel {
     private phase: number,
   ) {
     this.state = TileState.still;
+    this.directionVersor = Vector2.fromDirection(direction);
+    this.destCenterPos = { ...centerPos };
   }
 
 
@@ -28,9 +42,40 @@ export class TileModel {
   }
 
 
+  public getDestCenterPos(): Vector2 {
+    return { ...this.destCenterPos };
+  }
+
+
+  public getOccupGridCells(): OccupGridCells {
+
+    const rightSideVersor = new Vector2(
+      this.directionVersor.y,
+      -this.directionVersor.x,
+    );
+
+    return {
+      centerPos1: new Vector2(
+        this.destCenterPos.x - 0.5 * rightSideVersor.x,
+        this.destCenterPos.y - 0.5 * rightSideVersor.y,
+      ),
+      centerPos2: new Vector2(
+        this.destCenterPos.x + 0.5 * rightSideVersor.x,
+        this.destCenterPos.y + 0.5 * rightSideVersor.y,
+      ),
+    };
+  }
+
+
   public getDirection(): TileDirection {
     return this.direction;
   }
+
+
+  public getDirectionVersor(): Vector2 {
+    return this.directionVersor;
+  }
+
 
   public getRotationAngleRads(): number {
     switch (this.direction) {
@@ -49,7 +94,11 @@ export class TileModel {
   public startTransition(transition: BaseTileTransition) {
     this.state = TileState.transitioning;
     this.transition = transition;
-    this.transition.start(this.centerPos, this.direction, this.phase);
+    this.destCenterPos = this.transition.start(
+      this.centerPos,
+      this.direction,
+      this.phase
+    );
   }
 
 

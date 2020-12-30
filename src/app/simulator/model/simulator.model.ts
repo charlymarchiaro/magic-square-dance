@@ -1,16 +1,33 @@
 import { EventEmitter } from '@angular/core';
 import { SimPhaseState, Vector2, TileDirection } from './common';
 import { TileModel } from './tile.model';
-import { SimPhaseStateHandler } from './sim-phase-state-handler';
-import { filter } from 'rxjs/operators';
 import { GridCellModel } from './grid-cell.model';
+import { SimPhaseStateHandler } from './sim-phase-state-handler';
+
+// Tile transition
 import { LinearTileTransition } from './transition/linear.tile-transition';
+
+// Helpers
+import { Matrix } from './helpers/matrix';
+import { TileAllocator } from './helpers/tile-allocator';
+import { ClashingTilesDetector } from './helpers/clashing-tiles-detector';
+
+import { filter } from 'rxjs/operators';
+
+
+export interface SimulationParams {
+  maxIterations: number;
+}
+
 
 
 export class SimulatorModel {
 
   // Global phase value
   private phase: number;
+
+  // Global running state
+  private isRunning: boolean;
 
   // Global iteration index
   private iterationIndex: number;
@@ -25,24 +42,34 @@ export class SimulatorModel {
   // Grid cells models
   private gridCells: GridCellModel[] = [];
 
+  // Matrix
+  private matrix: Matrix;
+
   // Event emitters
   public iterationStarted = new EventEmitter<number>();
+  public runningStateChange = new EventEmitter<boolean>();
   public tilesAdded = new EventEmitter<TileModel[]>();
   public tilesRemoved = new EventEmitter<TileModel[]>();
   public gridCellsAdded = new EventEmitter<GridCellModel[]>();
   public phaseStateChange = new EventEmitter<SimPhaseState>();
 
 
-  constructor() {
+  constructor(private params: SimulationParams) {
     this.phase = 0;
     this.iterationIndex = 0;
+    this.setRunningState(true);
 
     this.phaseStateHandler = new SimPhaseStateHandler(this.phase);
     this.phaseStateHandler.state$.pipe(filter(s => !!s)).subscribe(s => {
       this.phaseState = s;
       this.phaseStateChange.emit(s);
       this.onPhaseStateChange();
-    })
+    });
+  }
+
+
+  public getPhase(): number {
+    return this.phase;
   }
 
 
@@ -52,6 +79,10 @@ export class SimulatorModel {
 
 
   public update(phase: number) {
+    if (!this.isRunning) {
+      return;
+    }
+
     this.phase = phase;
 
     this.tiles.forEach(t => {
@@ -59,6 +90,12 @@ export class SimulatorModel {
     });
 
     this.phaseStateHandler.update(phase);
+  }
+
+
+  private setRunningState(value: boolean) {
+    this.isRunning = value;
+    this.runningStateChange.emit(value);
   }
 
 
@@ -71,7 +108,7 @@ export class SimulatorModel {
       transitioningTiles: this.transitionTiles,
       showingPlaceholders: this.showPlaceholders,
       addingTiles: this.addTiles,
-    }
+    };
 
     handlers[this.phaseState].call(this);
 
@@ -98,7 +135,7 @@ export class SimulatorModel {
       const offset = new Vector2(
         offsetLength * ux,
         offsetLength * uy
-      )
+      );
 
       // Delta vector
       const dx = q === 0 || q === 1 ? -1 : 1;
@@ -122,28 +159,73 @@ export class SimulatorModel {
 
 
   private removeTiles() {
+    const clashingTilesDetector = new ClashingTilesDetector(
+      this.tiles,
+      this.matrix,
+    );
 
+    const clashes = clashingTilesDetector.findClashingTilePairs();
+
+    const removedTiles = clashes.reduce((list, clash) => [
+      ...list,
+      ...[clash.tile1, clash.tile2],
+    ], []);
+
+    removedTiles.forEach(t => {
+      const index = this.tiles.indexOf(t);
+      this.tiles.splice(index, 1);
+    });
+
+    this.tilesRemoved.emit(removedTiles);
   }
 
 
   private transitionTiles() {
     this.tiles.forEach(t => {
       t.startTransition(new LinearTileTransition());
-    })
+    });
   }
 
 
   private showPlaceholders() {
+    // Create matrix for current iteration
+    this.matrix = new Matrix(this.tiles, this.gridCells);
 
   }
 
 
   private addTiles() {
-    const tile1 = new TileModel(new Vector2(0, 0.5), TileDirection.up, this.phase);
-    this.tiles.push(tile1)
-    const tile2 = new TileModel(new Vector2(0, -0.5), TileDirection.down, this.phase);
-    this.tiles.push(tile2)
-    this.tilesAdded.emit([tile1, tile2])
+    const tileAllocator = new TileAllocator(this.matrix);
+    const insertionPoints = tileAllocator.findTilePairsInsertionPoints();
+
+    const addedTiles: TileModel[] = [];
+
+    insertionPoints.forEach(ip => {
+      let tile1: TileModel;
+      let tile2: TileModel;
+
+      if (Math.random() > 0.5) {
+        tile1 = new TileModel(new Vector2(ip.x, ip.y + 0.5), TileDirection.up, this.phase);
+        tile2 = new TileModel(new Vector2(ip.x, ip.y - 0.5), TileDirection.down, this.phase);
+      } else {
+        tile1 = new TileModel(new Vector2(ip.x + 0.5, ip.y), TileDirection.right, this.phase);
+        tile2 = new TileModel(new Vector2(ip.x - 0.5, ip.y), TileDirection.left, this.phase);
+      }
+
+      this.tiles.push(tile1);
+      this.tiles.push(tile2);
+      addedTiles.push(tile1, tile2);
+    });
+
+    addedTiles.forEach(t => {
+      this.matrix.addTile(t);
+    });
+
+    this.tilesAdded.emit(addedTiles);
+
+    if (this.iterationIndex >= this.params.maxIterations) {
+      this.setRunningState(false);
+    }
   }
 }
 

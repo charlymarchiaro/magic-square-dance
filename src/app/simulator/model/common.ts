@@ -7,6 +7,19 @@ export enum TileDirection {
 }
 
 
+export const areDirectionsOpposite = (
+  d1: TileDirection,
+  d2: TileDirection
+): boolean => {
+  return (
+    (d1 === TileDirection.up && d2 === TileDirection.down)
+    || (d1 === TileDirection.down && d2 === TileDirection.up)
+    || (d1 === TileDirection.left && d2 === TileDirection.right)
+    || (d1 === TileDirection.right && d2 === TileDirection.left)
+  );
+};
+
+
 export enum TileState {
   still = 'still',
   transitioning = 'transitioning',

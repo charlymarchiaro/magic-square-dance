@@ -1,8 +1,11 @@
 import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 import { AppComponent } from './app.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SimulatorComponent } from './simulator/simulator.component';
 
 @NgModule({
@@ -12,7 +15,10 @@ import { SimulatorComponent } from './simulator/simulator.component';
   ],
   imports: [
     BrowserModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    FormsModule,
+    MatSliderModule,
+    MatFormFieldModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

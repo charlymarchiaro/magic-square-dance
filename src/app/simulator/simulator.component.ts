@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import Phaser from 'phaser';
 import * as scenes from './scenes';
-import { CONTROL_PANEL_WIDTH_PX, FRAMES_PER_SEC } from './params';
+import * as params from './params';
 import { SimulatorModel } from './model/simulator.model';
 import { SimulatorTimer } from './model/simulator-timer';
-import { GridCellModel } from './model/grid-cell.model';
 
 
 @Component({
@@ -22,14 +21,28 @@ export class SimulatorComponent implements OnInit {
   private simulatorTimer: SimulatorTimer;
 
 
+  public simulationSpeed = params.DEFAULT_SIM_SPEED;
+  public minSimulationSpeed = params.MIN_SIM_SPEED;
+  public maxSimulationSpeed = params.MAX_SIM_SPEED;
+
+
   public controlPanelStyle = {
-    width: CONTROL_PANEL_WIDTH_PX,
-  }
+    width: params.CONTROL_PANEL_WIDTH_PX,
+  };
 
 
   constructor() {
-    this.simulatorModel = new SimulatorModel();
-    this.simulatorTimer = new SimulatorTimer(this.simulatorModel, 1000 / FRAMES_PER_SEC, 1);
+    this.simulationSpeed = 2;
+
+    this.simulatorModel = new SimulatorModel({
+      maxIterations: 1000,
+    });
+
+    this.simulatorTimer = new SimulatorTimer(
+      this.simulatorModel,
+      1000 / params.FRAMES_PER_SEC,
+      this.simulationSpeed,
+    );
 
     const scene = new scenes.MainScene(
       this.simulatorModel,
@@ -37,11 +50,12 @@ export class SimulatorComponent implements OnInit {
     );
 
     this.config = {
-      title: 'Magic square dance',
+      title: 'Magic Square Dance',
       type: Phaser.AUTO,
       scale: {
-        width: window.innerWidth - CONTROL_PANEL_WIDTH_PX,
+        width: window.innerWidth - params.CONTROL_PANEL_WIDTH_PX,
         height: window.innerHeight - 60,
+        mode: Phaser.Scale.NONE,
       },
       physics: {
         default: 'arcade',
@@ -56,8 +70,22 @@ export class SimulatorComponent implements OnInit {
   }
 
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.phaser = new Phaser.Game(this.config);
+
+    window.addEventListener('resize', () => {
+      this.phaser.scale.resize(
+        window.innerWidth - params.CONTROL_PANEL_WIDTH_PX,
+        window.innerHeight - 60,
+      );
+    });
+
     this.simulatorTimer.play();
+  }
+
+
+  public onSimulationSpeedSliderChange(value: number): void {
+    this.simulationSpeed = value;
+    this.simulatorTimer.setSimulationSpeed(value);
   }
 }

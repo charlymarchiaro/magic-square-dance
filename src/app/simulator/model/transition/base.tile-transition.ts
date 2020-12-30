@@ -8,14 +8,22 @@ export abstract class BaseTileTransition {
 
   constructor() { }
 
+  /**
+   * Starts the transition, returns the final position
+   */
   public start(
     startPosition: Vector2,
     direction: TileDirection,
     startPhase: number
-  ) {
+  ): Vector2 {
     this.startPosition = startPosition;
     this.directionVersor = Vector2.fromDirection(direction);
     this.startPhase = startPhase;
+
+    return new Vector2(
+      startPosition.x + this.directionVersor.x,
+      startPosition.y + this.directionVersor.y,
+    );
   }
 
   /**
