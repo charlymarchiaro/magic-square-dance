@@ -11,9 +11,9 @@ export const CONTROL_PANEL_WIDTH_PX = 300;
  */
 export const FRAMES_PER_SEC = 30;
 
-export const MIN_SIM_SPEED = 0.5;
-export const MAX_SIM_SPEED = 5.0;
-export const DEFAULT_SIM_SPEED = 2.0;
+export const MIN_SIM_SPEED = 1;
+export const MAX_SIM_SPEED = 10;
+export const DEFAULT_SIM_SPEED = 2;
 
 export const CELL_SIZE_PX = 64;
 export const CELL_BORDER_WIDTH_PX = 3;
@@ -23,9 +23,9 @@ export const SIM_PHASE_STATE_TRANSITION_SPECS: {
   [state in SimPhaseState]: SimPhaseStateTransitionSpec
 } = {
   addingGridCells: { phaseDuration: 1 },
-  removingTiles: { phaseDuration: 1 },
+  removingTiles: { phaseDuration: 2 },
   transitioningTiles: { phaseDuration: 2 },
-  showingPlaceholders: { phaseDuration: 1 },
+  showingPlaceholders: { phaseDuration: 2 },
   addingTiles: { phaseDuration: 1 },
 };
 

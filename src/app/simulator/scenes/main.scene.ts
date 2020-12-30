@@ -4,6 +4,7 @@ import { TileDirection, Vector2 } from '../model/common';
 import * as params from '../params';
 import { TileModel } from '../model/tile.model';
 import { SimulatorTimer } from '../model/simulator-timer';
+import { SIM_PHASE_STATE_TRANSITION_SPECS } from '../params';
 
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
@@ -32,6 +33,7 @@ export class MainScene extends Phaser.Scene {
 
   private gridLayer: Phaser.GameObjects.Layer;
   private tileLayer: Phaser.GameObjects.Layer;
+  private placeholderLayer: Phaser.GameObjects.Layer;
 
   private gridCells: GridCellBinding[] = [];
   private tiles: TileBinding[] = [];
@@ -48,6 +50,7 @@ export class MainScene extends Phaser.Scene {
 
     this.simulatorModel.iterationStarted.subscribe(ii => this.onIterationStarted(ii));
     this.simulatorModel.gridCellsAdded.subscribe(gc => this.onGridCellsAdded(gc));
+    this.simulatorModel.placeholdersAdded.subscribe(p => this.onPlaceholdersAdded(p));
     this.simulatorModel.tilesAdded.subscribe(t => this.onTilesAdded(t));
     this.simulatorModel.tilesRemoved.subscribe(t => this.onTilesRemoved(t));
 
@@ -68,7 +71,9 @@ export class MainScene extends Phaser.Scene {
     this.load.image('arrowTileGray', 'arrow_tile_gray.png');
     this.load.image('arrowTileOrange', 'arrow_tile_orange.png');
     this.load.image('arrowTileYellow', 'arrow_tile_yellow.png');
-    this.load.image('placeholder', 'placeholder.png');
+    this.load.image('arrowTileWhite', 'arrow_tile_white.png');
+    this.load.image('placeholderOrange', 'placeholder_orange.png');
+    this.load.image('placeholderWhite', 'placeholder_white.png');
     this.load.image('gridCell', 'grid_cell.png');
 
     this.updateCamera();
@@ -77,6 +82,7 @@ export class MainScene extends Phaser.Scene {
 
   public create() {
     this.gridLayer = this.add.layer().setDepth(0);
+    this.placeholderLayer = this.add.layer().setDepth(50);
     this.tileLayer = this.add.layer().setDepth(100);
   }
 
@@ -86,7 +92,7 @@ export class MainScene extends Phaser.Scene {
 
     this.tiles.forEach(t => {
       const pos = this.transformToViewSpace(t.model.getCenterPos());
-      t.img.setPosition(pos.x, pos.y)
+      t.img.setPosition(pos.x, pos.y);
     });
 
     this.updateCamera();
@@ -128,13 +134,46 @@ export class MainScene extends Phaser.Scene {
         duration: fadeDuration,
         repeat: 0,
         yoyo: false,
-      })
+      });
 
       // Add binding
       this.gridCells.push({ model: gc, img });
 
       // Add to layer
       this.gridLayer.add(img);
+    });
+  }
+
+
+  private onPlaceholdersAdded(insertionPoints: Vector2[]) {
+    insertionPoints.forEach(ip => {
+
+      const pos = this.transformToViewSpace(ip);
+      const img = this.add.image(pos.x, pos.y, 'placeholderWhite');
+      img.setAlpha(0);
+
+      const specs = SIM_PHASE_STATE_TRANSITION_SPECS;
+
+      const duration =
+        (
+          specs.showingPlaceholders.phaseDuration
+          + specs.addingGridCells.phaseDuration
+        )
+        * 1000 * this.getUnitPhaseDurationSecs();
+
+      this.tweens.add({
+        targets: img,
+        alpha: { from: 0, to: 1 },
+        ease: 'Linear',
+        duration: duration * 0.25,
+        repeat: 0,
+        yoyo: false,
+        completeDelay: duration * 0.75,
+        onComplete: () => img.destroy(),
+      });
+
+      this.placeholderLayer.add(img);
+
     });
   }
 
@@ -155,6 +194,19 @@ export class MainScene extends Phaser.Scene {
       const img = this.add.image(pos.x, pos.y, texture).setRotation(ang);
       // const img = this.add.image(pos.x, pos.y, 'arrowTileGray').setRotation(ang);
 
+      img.setAlpha(0);
+
+      const fadeDuration = 0.5 * 1000 * this.getUnitPhaseDurationSecs();
+
+      this.tweens.add({
+        targets: img,
+        alpha: { from: 0, to: 1 },
+        ease: 'Linear',
+        duration: fadeDuration,
+        repeat: 0,
+        yoyo: false,
+      });
+
       // Add binding
       this.tiles.push({ model: t, img });
 
@@ -170,7 +222,22 @@ export class MainScene extends Phaser.Scene {
         b => b.model === t
       );
       const tileBinding = this.tiles[index];
-      tileBinding.img.destroy();
+
+      tileBinding.img.setTexture('arrowTileWhite');
+
+      const fadeDuration = 2.5 * 1000 * this.getUnitPhaseDurationSecs();
+
+      this.tweens.add({
+        targets: tileBinding.img,
+        alpha: { from: 1, to: 0 },
+        ease: 'Linear',
+        duration: fadeDuration * 0.5,
+        repeat: 0,
+        yoyo: false,
+        delay: fadeDuration * 0.5,
+        onComplete: () => tileBinding.img.destroy(),
+      });
+
       this.tiles.splice(index, 1);
     });
   }

@@ -45,9 +45,13 @@ export class SimulatorModel {
   // Matrix
   private matrix: Matrix;
 
+  // Current iteration insertion points
+  private insertionPoints: Vector2[];
+
   // Event emitters
   public iterationStarted = new EventEmitter<number>();
   public runningStateChange = new EventEmitter<boolean>();
+  public placeholdersAdded = new EventEmitter<Vector2[]>();
   public tilesAdded = new EventEmitter<TileModel[]>();
   public tilesRemoved = new EventEmitter<TileModel[]>();
   public gridCellsAdded = new EventEmitter<GridCellModel[]>();
@@ -100,7 +104,6 @@ export class SimulatorModel {
 
 
   private onPhaseStateChange() {
-    console.log(this.phaseState)
 
     const handlers: { [state in SimPhaseState]: () => void } = {
       addingGridCells: this.addGridCells,
@@ -174,6 +177,8 @@ export class SimulatorModel {
     removedTiles.forEach(t => {
       const index = this.tiles.indexOf(t);
       this.tiles.splice(index, 1);
+
+      this.matrix.removeTile(t);
     });
 
     this.tilesRemoved.emit(removedTiles);
@@ -191,16 +196,17 @@ export class SimulatorModel {
     // Create matrix for current iteration
     this.matrix = new Matrix(this.tiles, this.gridCells);
 
+    const tileAllocator = new TileAllocator(this.matrix);
+    this.insertionPoints = tileAllocator.findTilePairsInsertionPoints();
+
+    this.placeholdersAdded.emit(this.insertionPoints);
   }
 
 
   private addTiles() {
-    const tileAllocator = new TileAllocator(this.matrix);
-    const insertionPoints = tileAllocator.findTilePairsInsertionPoints();
-
     const addedTiles: TileModel[] = [];
 
-    insertionPoints.forEach(ip => {
+    this.insertionPoints.forEach(ip => {
       let tile1: TileModel;
       let tile2: TileModel;
 

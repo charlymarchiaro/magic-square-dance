@@ -82,11 +82,11 @@ export class TileModel {
       case TileDirection.up:
         return 0.0;
       case TileDirection.left:
-        return Math.PI / 2;
+        return 3 * Math.PI / 2;
       case TileDirection.down:
         return Math.PI;
       case TileDirection.right:
-        return 3 * Math.PI / 2;
+        return Math.PI / 2;
     }
   }
 
