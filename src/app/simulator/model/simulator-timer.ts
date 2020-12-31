@@ -20,7 +20,7 @@ export class SimulatorTimer {
   }
 
 
-  public setSimulationSpeed(elapsedPhasePerSec: number) {
+  public setSimulationSpeed(elapsedPhasePerSec: number): void {
     this.elapsedPhasePerSec = elapsedPhasePerSec;
   }
 
@@ -30,7 +30,7 @@ export class SimulatorTimer {
   }
 
 
-  public play() {
+  public play(): void {
     if (this.isActive) {
       return;
     }
@@ -44,7 +44,7 @@ export class SimulatorTimer {
   }
 
 
-  public pause() {
+  public pause(): void {
     if (!this.isActive) {
       return;
     }
@@ -55,7 +55,7 @@ export class SimulatorTimer {
   }
 
 
-  private onTimerStep() {
+  private onTimerStep(): void {
     this.phase += this.elapsedPhasePerSec * this.stepIntervalMillisecs / 1000;
     this.simulatorModel.update(this.phase);
   }

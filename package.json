@@ -29,6 +29,7 @@
     "@angular/router": "~10.1.4",
     "phaser": "^3.50.1",
     "rxjs": "~6.6.0",
+    "seedrandom": "^3.0.5",
     "tslib": "^2.0.0",
     "zone.js": "~0.10.2"
   },

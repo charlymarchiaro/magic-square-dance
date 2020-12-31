@@ -128,7 +128,7 @@ export class TileAllocator {
    */
   private markTwoByTwoSpacesAsOccupied(
     twoByTwoEmptySpaces: MatrixCellCoords[]
-  ) {
+  ): void {
     const cell: MatrixCell = {
       hasGridCell: true,
       hasTile: true,

@@ -12,12 +12,22 @@ import { Matrix } from './helpers/matrix';
 import { TileAllocator } from './helpers/tile-allocator';
 import { ClashingTilesDetector } from './helpers/clashing-tiles-detector';
 
+// Seedranrom
+import * as seedrandom from 'seedrandom';
+
 import { filter } from 'rxjs/operators';
 
+
+export enum DisplayMode {
+  colors = 'colors',
+  arrows = 'arrows,'
+}
 
 export interface SimulationParams {
 
   maxIterations: number;
+
+  randomSeed: number;
 
   /**
    * Takes values between 0 and 1. A value of 0.5
@@ -27,10 +37,15 @@ export interface SimulationParams {
   randomBiasCoef: number;
 
   isArcticCircleActive: boolean;
+
+  displayMode: DisplayMode;
 }
 
 
 export class SimulatorModel {
+
+  // Global seedable random generator
+  private random = seedrandom();
 
   // Global phase value
   private phase: number;
@@ -65,14 +80,19 @@ export class SimulatorModel {
   public tilesRemoved = new EventEmitter<TileModel[]>();
   public gridCellsAdded = new EventEmitter<GridCellModel[]>();
   public phaseStateChange = new EventEmitter<SimPhaseState>();
+  public maxIterationsChange = new EventEmitter<number>();
+  public randomSeedChange = new EventEmitter<number>();
   public randomBiasCoefChange = new EventEmitter<number>();
   public arcticCircleActiveChange = new EventEmitter<boolean>();
+  public displayModeChange = new EventEmitter<DisplayMode>();
 
 
   constructor(private params: SimulationParams) {
     this.phase = 0;
     this.iterationIndex = 0;
     this.setRunningState(true);
+
+    this.random = seedrandom(params.randomSeed);
 
     this.phaseStateHandler = new SimPhaseStateHandler(this.phase);
     this.phaseStateHandler.state$.pipe(filter(s => !!s)).subscribe(s => {
@@ -82,12 +102,29 @@ export class SimulatorModel {
     });
   }
 
+  /**
+   * Simulation params getters/setters
+   */
+
   public getParams(): SimulationParams {
     return { ...this.params };
   }
 
+  public setMaxIterations(maxIterations: number): void {
+    if (maxIterations < 1) {
+      throw new Error(`Invalid maxIterations value: ${maxIterations}`);
+    }
+    this.params.maxIterations = maxIterations;
+    this.maxIterationsChange.emit(maxIterations);
+  }
 
-  public setRandomBiasCoef(randomBiasCoef: number) {
+  public setRandomSeed(seed: number): void {
+    this.params.randomSeed = seed;
+    this.random = seedrandom(seed);
+    this.randomSeedChange.emit(seed);
+  }
+
+  public setRandomBiasCoef(randomBiasCoef: number): void {
     if (randomBiasCoef < 0 || randomBiasCoef > 1) {
       throw new Error(`Invalid randomBiasCoef value: ${randomBiasCoef}`);
     }
@@ -95,11 +132,16 @@ export class SimulatorModel {
     this.randomBiasCoefChange.emit(randomBiasCoef);
   }
 
-
-  public setArcticCircleActiveState(isActive: boolean) {
+  public setArcticCircleActiveState(isActive: boolean): void {
     this.params.isArcticCircleActive = isActive;
     this.arcticCircleActiveChange.emit(isActive);
   }
+
+  public setDisplayMode(mode: DisplayMode): void {
+    this.params.displayMode = mode;
+    this.displayModeChange.emit(mode);
+  }
+
 
 
   public getPhase(): number {
@@ -112,7 +154,7 @@ export class SimulatorModel {
   }
 
 
-  public update(phase: number) {
+  public update(phase: number): void {
     if (!this.isRunning) {
       return;
     }
@@ -127,13 +169,13 @@ export class SimulatorModel {
   }
 
 
-  private setRunningState(value: boolean) {
+  private setRunningState(value: boolean): void {
     this.isRunning = value;
     this.runningStateChange.emit(value);
   }
 
 
-  private onPhaseStateChange() {
+  private onPhaseStateChange(): void {
 
     const handlers: { [state in SimPhaseState]: () => void } = {
       addingGridCells: this.addGridCells,
@@ -153,7 +195,7 @@ export class SimulatorModel {
   }
 
 
-  private addGridCells() {
+  private addGridCells(): void {
     const numAddedCellsPerQuadrant = 1 + this.iterationIndex;
     const offsetLength = 1 + this.iterationIndex;
 
@@ -191,7 +233,7 @@ export class SimulatorModel {
   }
 
 
-  private removeTiles() {
+  private removeTiles(): void {
     const clashingTilesDetector = new ClashingTilesDetector(
       this.tiles,
       this.matrix,
@@ -215,14 +257,14 @@ export class SimulatorModel {
   }
 
 
-  private transitionTiles() {
+  private transitionTiles(): void {
     this.tiles.forEach(t => {
       t.startTransition(new LinearTileTransition());
     });
   }
 
 
-  private showPlaceholders() {
+  private showPlaceholders(): void {
     // Create matrix for current iteration
     this.matrix = new Matrix(this.tiles, this.gridCells);
 
@@ -233,14 +275,14 @@ export class SimulatorModel {
   }
 
 
-  private addTiles() {
+  private addTiles(): void {
     const addedTiles: TileModel[] = [];
 
     this.insertionPoints.forEach(ip => {
       let tile1: TileModel;
       let tile2: TileModel;
 
-      if (Math.random() > this.params.randomBiasCoef) {
+      if (this.random() > this.params.randomBiasCoef) {
         tile1 = new TileModel(new Vector2(ip.x, ip.y + 0.5), TileDirection.up, this.phase);
         tile2 = new TileModel(new Vector2(ip.x, ip.y - 0.5), TileDirection.down, this.phase);
       } else {

@@ -1,5 +1,5 @@
-import { GridCellModel } from "../model/grid-cell.model";
-import { SimulatorModel } from '../model/simulator.model';
+import { GridCellModel } from '../model/grid-cell.model';
+import { DisplayMode, SimulatorModel } from '../model/simulator.model';
 import { TileDirection, Vector2 } from '../model/common';
 import * as params from '../params';
 import { TileModel } from '../model/tile.model';
@@ -25,6 +25,14 @@ interface TileBinding {
 }
 
 
+type TextureName =
+  | 'gridCell'
+  | 'placeholder'
+  | 'tileUp'
+  | 'tileDown'
+  | 'tileLeft'
+  | 'tileRight'
+  | 'clashingTile';
 
 export class MainScene extends Phaser.Scene {
 
@@ -44,6 +52,8 @@ export class MainScene extends Phaser.Scene {
 
   private isArcticCircleActive: boolean;
 
+  private displayMode: DisplayMode;
+
 
   constructor(
     private simulatorModel: SimulatorModel,
@@ -57,10 +67,11 @@ export class MainScene extends Phaser.Scene {
     this.simulatorModel.tilesAdded.subscribe(t => this.onTilesAdded(t));
     this.simulatorModel.tilesRemoved.subscribe(t => this.onTilesRemoved(t));
     this.simulatorModel.arcticCircleActiveChange.subscribe(s => this.setArcticCircleActiveState(s));
+    this.simulatorModel.displayModeChange.subscribe(m => this.setDisplayMode(m));
   }
 
 
-  public preload() {
+  public preload(): void {
     this.iterationIndex = 0;
 
     this.load.setBaseURL('assets/img/');
@@ -83,7 +94,7 @@ export class MainScene extends Phaser.Scene {
   }
 
 
-  public create() {
+  public create(): void {
     this.gridLayer = this.add.layer().setDepth(0);
     this.placeholderLayer = this.add.layer().setDepth(50);
     this.tileLayer = this.add.layer().setDepth(100);
@@ -92,13 +103,55 @@ export class MainScene extends Phaser.Scene {
     this.arcticCircle = this.add.ellipse(0, 0, 2 * params.CELL_SIZE_PX, 2 * params.CELL_SIZE_PX);
     this.arcticCircle.setAlpha(0);
     this.arcticCircleLayer.add(this.arcticCircle);
-    this.setArcticCircleActiveState(
-      this.simulatorModel.getParams().isArcticCircleActive
-    );
+
+    // Simulation params
+    const sp = this.simulatorModel.getParams();
+    this.setArcticCircleActiveState(sp.isArcticCircleActive);
+    this.setDisplayMode(sp.displayMode);
+
+    // Create dummy board
+    this.createDummyBoard();
   }
 
 
-  public update() {
+  public destroy(): void {
+    this.sys.game.destroy(true);
+  }
+
+
+  /**
+   * Populate the empty screen with a starting dummy board.
+   * These grid cells are not part of the grid cell list
+   */
+  private createDummyBoard(): void {
+
+    const gcs: Vector2[] = [
+      new Vector2(-0.5, -0.5),
+      new Vector2(0.5, -0.5),
+      new Vector2(-0.5, 0.5),
+      new Vector2(0.5, 0.5),
+    ];
+
+    gcs.forEach(gc => {
+      const pos = this.transformToViewSpace(gc);
+      const img = this.add.image(pos.x, pos.y, this.getTextureName('gridCell'));
+      img.setAlpha(0);
+
+      const fadeDuration = 2.5 * 1000 * this.getUnitPhaseDurationSecs();
+
+      this.tweens.add({
+        targets: img,
+        alpha: { from: 0, to: 1 },
+        ease: 'Linear',
+        duration: fadeDuration,
+        repeat: 0,
+        yoyo: false,
+      });
+    });
+  }
+
+
+  public update(): void {
     this.phase = this.simulatorModel.getPhase();
 
     this.tiles.forEach(t => {
@@ -111,7 +164,7 @@ export class MainScene extends Phaser.Scene {
   }
 
 
-  private updateCamera() {
+  private updateCamera(): void {
     const fractionalIter = this.phase / params.ITERATION_PHASE_DURATION;
 
     const sceneSize = 2 * (1 + fractionalIter) * params.CELL_SIZE_PX;
@@ -125,7 +178,7 @@ export class MainScene extends Phaser.Scene {
   }
 
 
-  private updateArcticCircle() {
+  private updateArcticCircle(): void {
     /**
      * When a random bias coefficient other than 0.5 (fair) is applied, the
      * arctic circle seems to take, in general, the shape of an ellipse
@@ -142,7 +195,8 @@ export class MainScene extends Phaser.Scene {
      * https://math.stackexchange.com/questions/1971097/what-are-the-axes-of-an-ellipse-within-a-rhombus
      *
      * Then, the intersection points are calculated as a function of the
-     * random bias coefficient, and finally the ellipse dimensions are obtained as:
+     * random bias coefficient, and finally the (normalized) ellipse
+     * dimensions are obtained as:
      *
      *   width = 2 * sqrt ( 1 - (random bias coef) )
      *   height = 2 * sqrt (random bias coef)
@@ -166,15 +220,15 @@ export class MainScene extends Phaser.Scene {
   }
 
 
-  private onIterationStarted(iterationIndex: number) {
+  private onIterationStarted(iterationIndex: number): void {
     this.iterationIndex = iterationIndex;
   }
 
 
-  private onGridCellsAdded(gridCells: GridCellModel[]) {
+  private onGridCellsAdded(gridCells: GridCellModel[]): void {
     gridCells.forEach(gc => {
       const pos = this.transformToViewSpace(gc.getCenterPos());
-      const img = this.add.image(pos.x, pos.y, 'gridCell');
+      const img = this.add.image(pos.x, pos.y, this.getTextureName('gridCell'));
       img.setAlpha(0);
 
       const fadeDuration = 2.5 * 1000 * this.getUnitPhaseDurationSecs();
@@ -197,11 +251,11 @@ export class MainScene extends Phaser.Scene {
   }
 
 
-  private onPlaceholdersAdded(insertionPoints: Vector2[]) {
+  private onPlaceholdersAdded(insertionPoints: Vector2[]): void {
     insertionPoints.forEach(ip => {
 
       const pos = this.transformToViewSpace(ip);
-      const img = this.add.image(pos.x, pos.y, 'placeholderWhite');
+      const img = this.add.image(pos.x, pos.y, this.getTextureName('placeholder'));
       img.setAlpha(0);
 
       const specs = params.SIM_PHASE_STATE_TRANSITION_SPECS;
@@ -229,22 +283,11 @@ export class MainScene extends Phaser.Scene {
   }
 
 
-  private onTilesAdded(tiles: TileModel[]) {
+  private onTilesAdded(tiles: TileModel[]): void {
     tiles.forEach(t => {
       const pos = this.transformToViewSpace(t.getCenterPos());
       const ang = t.getRotationAngleRads();
-
-      const texturesMap: { [direction in TileDirection]: string } = {
-        up: 'tileUp',
-        down: 'tileDown',
-        left: 'tileLeft',
-        right: 'tileRight',
-      };
-      const texture = texturesMap[t.getDirection()];
-
-      const img = this.add.image(pos.x, pos.y, texture).setRotation(ang);
-      // const img = this.add.image(pos.x, pos.y, 'arrowTileGray').setRotation(ang);
-
+      const img = this.add.image(pos.x, pos.y, this.getTileTexture(t)).setRotation(ang);
       img.setAlpha(0);
 
       const fadeDuration = 0.5 * 1000 * this.getUnitPhaseDurationSecs();
@@ -267,14 +310,14 @@ export class MainScene extends Phaser.Scene {
   }
 
 
-  private onTilesRemoved(tiles: TileModel[]) {
+  private onTilesRemoved(tiles: TileModel[]): void {
     tiles.forEach(t => {
       const index = this.tiles.findIndex(
         b => b.model === t
       );
       const tileBinding = this.tiles[index];
 
-      tileBinding.img.setTexture('arrowTileWhite');
+      tileBinding.img.setTexture(this.getTextureName('clashingTile'));
 
       const fadeDuration = 2.5 * 1000 * this.getUnitPhaseDurationSecs();
 
@@ -294,9 +337,11 @@ export class MainScene extends Phaser.Scene {
   }
 
 
-  private setArcticCircleActiveState(isActive: boolean) {
+  private setArcticCircleActiveState(isActive: boolean): void {
 
-    const fadeDuration = 2.5 * 1000 * this.getUnitPhaseDurationSecs();
+    this.isArcticCircleActive = isActive;
+
+    const fadeDuration = 0.2 * 1000;
 
     const alpha = isActive
       ? { from: this.arcticCircle.alpha, to: 1 }
@@ -313,6 +358,16 @@ export class MainScene extends Phaser.Scene {
   }
 
 
+  private setDisplayMode(mode: DisplayMode): void {
+    this.displayMode = mode;
+
+    // Update already placed elements
+    this.tiles.forEach(t => {
+      t.img.setTexture(this.getTileTexture(t.model));
+    });
+  }
+
+
   private transformToViewSpace(v: Vector2): Vector2 {
     return new Vector2(
       v.x * params.CELL_SIZE_PX,
@@ -321,7 +376,53 @@ export class MainScene extends Phaser.Scene {
   }
 
 
-  private getUnitPhaseDurationSecs() {
+  private getUnitPhaseDurationSecs(): number {
     return 1 / this.simulatorTimer.getSimulationSpeed();
+  }
+
+
+  private getTextureName(
+    kind: TextureName
+
+  ): string {
+
+    if (this.displayMode === DisplayMode.colors) {
+      switch (kind) {
+        case 'gridCell': return 'gridCell';
+        case 'placeholder': return 'placeholderWhite';
+        case 'tileUp': return 'tileUp';
+        case 'tileDown': return 'tileDown';
+        case 'tileLeft': return 'tileLeft';
+        case 'tileRight': return 'tileRight';
+        case 'clashingTile': return 'arrowTileWhite';
+
+        default: throw new Error('No texture defined for kind: ' + kind);
+      }
+    }
+    if (this.displayMode === DisplayMode.arrows) {
+      switch (kind) {
+        case 'gridCell': return 'gridCell';
+        case 'placeholder': return 'placeholderOrange';
+        case 'tileUp': return 'arrowTileGray';
+        case 'tileDown': return 'arrowTileGray';
+        case 'tileLeft': return 'arrowTileGray';
+        case 'tileRight': return 'arrowTileGray';
+        case 'clashingTile': return 'arrowTileYellow';
+
+        default: throw new Error('No texture defined for kind: ' + kind);
+      }
+    }
+    throw new Error('No textures defined for display mode: ' + this.displayMode);
+  }
+
+
+  private getTileTexture(tile: TileModel): string {
+    const texturesMap: { [direction in TileDirection]: TextureName } = {
+      up: 'tileUp',
+      down: 'tileDown',
+      left: 'tileLeft',
+      right: 'tileRight',
+    };
+    return this.getTextureName(texturesMap[tile.getDirection()]);
   }
 }

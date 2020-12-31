@@ -34,7 +34,7 @@ export class Matrix {
   }
 
 
-  private initCells() {
+  private initCells(): void {
     /**
      * The matrix size can be calculated quickly as a function
      * of the number of grid cells:
@@ -86,7 +86,7 @@ export class Matrix {
   }
 
 
-  public addTile(tile: TileModel) {
+  public addTile(tile: TileModel): void {
     const occupGridCells = tile.getOccupGridCells();
     // First tile cell
     const coords1 = this.transformPosToGridCoords(occupGridCells.centerPos1);
@@ -99,7 +99,7 @@ export class Matrix {
   }
 
 
-  public removeTile(tile: TileModel) {
+  public removeTile(tile: TileModel): void {
     const occupGridCells = tile.getOccupGridCells();
     // First tile cell
     const coords1 = this.transformPosToGridCoords(occupGridCells.centerPos1);
@@ -146,7 +146,7 @@ export class Matrix {
   }
 
 
-  public setCellAtCoords(coords: MatrixCellCoords, cell: MatrixCell) {
+  public setCellAtCoords(coords: MatrixCellCoords, cell: MatrixCell): void {
     this.cells[coords.u][coords.v] = { ...cell };
   }
 

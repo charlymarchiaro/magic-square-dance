@@ -4,6 +4,83 @@
     id="control-panel"
     [ngStyle]="controlPanelStyle">
 
+    <div id="sim-control-panel">
+      <button
+        id="play-btn"
+        mat-mini-fab
+        color="primary"
+        matTooltip="Play"
+        (click)="onPlayClick()"
+        [disabled]="isPlaying">
+        <mat-icon>play_arrow</mat-icon>
+      </button>
+
+      <button
+        id="pause-btn"
+        mat-mini-fab
+        color="primary"
+        matTooltip="Pause"
+        (click)="onPauseClick()"
+        [disabled]="!isPlaying">
+        <mat-icon>pause</mat-icon>
+      </button>
+
+      <div id="progress">
+        <mat-label>
+          Iteration: {{iterationIndex}}/{{maxIterations}}
+        </mat-label>
+      </div>
+
+      <button
+        id="restart-btn"
+        mat-mini-fab
+        color="primary"
+        matTooltip="Restart"
+        (click)="onRestartClick()">
+        <mat-icon>replay</mat-icon>
+      </button>
+
+    </div>
+
+    <div
+      id="max-iterations"
+      class="input-field">
+
+      <mat-label>Max iterations:</mat-label>
+      <mat-form-field>
+        <input
+          matInput
+          type="number"
+          autocomplete="false"
+          [value]="maxIterations"
+          min="1"
+          (change)="onMaxIterationsChange($event.srcElement.value)">
+      </mat-form-field>
+    </div>
+
+    <div
+      id="random-seed"
+      class="input-field">
+
+      <mat-label>Random seed:</mat-label>
+      <mat-form-field>
+        <input
+          matInput
+          type="number"
+          autocomplete="false"
+          [value]="randomSeed"
+          (change)="onRandomSeedChange($event.srcElement.value)">
+      </mat-form-field>
+
+      <button
+        mat-icon-button
+        class="icon-button"
+        (click)="onRegenerateRandomSeedClick()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+
+    </div>
+
     <div
       id="simulation-speed"
       class="slider-field">
@@ -52,8 +129,43 @@
       </mat-checkbox>
     </div>
 
+    <div
+      id="display-mode"
+      class="toggle-field">
+
+      <mat-label>Display mode:</mat-label>
+      <mat-button-toggle-group
+        name="displayMode"
+        aria-label="Display mode"
+        (change)="onDisplayModeChange($event.value)"
+        [value]="displayMode">
+        <mat-button-toggle [value]="DisplayMode.colors">Colors</mat-button-toggle>
+        <mat-button-toggle [value]="DisplayMode.arrows">Arrows</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <hr>
+
+    <div id="about">
+      <h1>About this project</h1>
+      <p><i>Magic Square Dance</i> simulator, as described in this Mathologer <a
+          href="https://www.youtube.com/watch?v=Yy7Q8IWNfHM&ab_channel=Mathologer"
+          target="_blank">
+          video.
+        </a>
+      </p>
+      <p>Author: Carlos A. Marchiaro - <a
+          href="https://twitter.com/charlymarchiaro"
+          target="_blank">
+          @charlymarchiaro
+        </a></p>
+      <p>Github repository: <a
+          href="https://github.com/charlymarchiaro/magic-square-dance"
+          target="_blank">
+          magic-square-dance
+        </a></p>
+    </div>
   </div>
 
   <div id="phaser-canvas"></div>
-
 </div>
