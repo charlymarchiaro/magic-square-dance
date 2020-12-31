@@ -16,9 +16,18 @@ import { filter } from 'rxjs/operators';
 
 
 export interface SimulationParams {
-  maxIterations: number;
-}
 
+  maxIterations: number;
+
+  /**
+   * Takes values between 0 and 1. A value of 0.5
+   * produces a fair random generation, with a probability
+   * of 50% for both outcomes.
+   */
+  randomBiasCoef: number;
+
+  isArcticCircleActive: boolean;
+}
 
 
 export class SimulatorModel {
@@ -56,6 +65,8 @@ export class SimulatorModel {
   public tilesRemoved = new EventEmitter<TileModel[]>();
   public gridCellsAdded = new EventEmitter<GridCellModel[]>();
   public phaseStateChange = new EventEmitter<SimPhaseState>();
+  public randomBiasCoefChange = new EventEmitter<number>();
+  public arcticCircleActiveChange = new EventEmitter<boolean>();
 
 
   constructor(private params: SimulationParams) {
@@ -69,6 +80,25 @@ export class SimulatorModel {
       this.phaseStateChange.emit(s);
       this.onPhaseStateChange();
     });
+  }
+
+  public getParams(): SimulationParams {
+    return { ...this.params };
+  }
+
+
+  public setRandomBiasCoef(randomBiasCoef: number) {
+    if (randomBiasCoef < 0 || randomBiasCoef > 1) {
+      throw new Error(`Invalid randomBiasCoef value: ${randomBiasCoef}`);
+    }
+    this.params.randomBiasCoef = randomBiasCoef;
+    this.randomBiasCoefChange.emit(randomBiasCoef);
+  }
+
+
+  public setArcticCircleActiveState(isActive: boolean) {
+    this.params.isArcticCircleActive = isActive;
+    this.arcticCircleActiveChange.emit(isActive);
   }
 
 
@@ -210,7 +240,7 @@ export class SimulatorModel {
       let tile1: TileModel;
       let tile2: TileModel;
 
-      if (Math.random() > 0.5) {
+      if (Math.random() > this.params.randomBiasCoef) {
         tile1 = new TileModel(new Vector2(ip.x, ip.y + 0.5), TileDirection.up, this.phase);
         tile2 = new TileModel(new Vector2(ip.x, ip.y - 0.5), TileDirection.down, this.phase);
       } else {

@@ -25,6 +25,9 @@ export class SimulatorComponent implements OnInit {
   public minSimulationSpeed = params.MIN_SIM_SPEED;
   public maxSimulationSpeed = params.MAX_SIM_SPEED;
 
+  public randomBiasCoef = 0.5;
+
+  public isArcticCircleActive: boolean;
 
   public controlPanelStyle = {
     width: params.CONTROL_PANEL_WIDTH_PX,
@@ -35,7 +38,9 @@ export class SimulatorComponent implements OnInit {
     this.simulationSpeed = 2;
 
     this.simulatorModel = new SimulatorModel({
-      maxIterations: 1000,
+      maxIterations: 200,
+      randomBiasCoef: this.randomBiasCoef,
+      isArcticCircleActive: false,
     });
 
     this.simulatorTimer = new SimulatorTimer(
@@ -87,5 +92,17 @@ export class SimulatorComponent implements OnInit {
   public onSimulationSpeedSliderChange(value: number): void {
     this.simulationSpeed = value;
     this.simulatorTimer.setSimulationSpeed(value);
+  }
+
+
+  public onRandomBiasCoefSliderChange(value: number): void {
+    this.randomBiasCoef = value;
+    this.simulatorModel.setRandomBiasCoef(value);
+  }
+
+
+  public onArcticCircleCheckboxChange(checked: boolean) {
+    this.isArcticCircleActive = checked;
+    this.simulatorModel.setArcticCircleActiveState(checked);
   }
 }

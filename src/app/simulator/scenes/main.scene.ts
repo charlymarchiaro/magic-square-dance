@@ -4,7 +4,6 @@ import { TileDirection, Vector2 } from '../model/common';
 import * as params from '../params';
 import { TileModel } from '../model/tile.model';
 import { SimulatorTimer } from '../model/simulator-timer';
-import { SIM_PHASE_STATE_TRANSITION_SPECS } from '../params';
 
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
@@ -30,16 +29,20 @@ interface TileBinding {
 export class MainScene extends Phaser.Scene {
 
   private camera: Phaser.Cameras.Scene2D.Camera;
+  private arcticCircle: Phaser.GameObjects.Ellipse;
 
   private gridLayer: Phaser.GameObjects.Layer;
-  private tileLayer: Phaser.GameObjects.Layer;
   private placeholderLayer: Phaser.GameObjects.Layer;
+  private tileLayer: Phaser.GameObjects.Layer;
+  private arcticCircleLayer: Phaser.GameObjects.Layer;
 
   private gridCells: GridCellBinding[] = [];
   private tiles: TileBinding[] = [];
 
   private phase: number;
   private iterationIndex: number;
+
+  private isArcticCircleActive: boolean;
 
 
   constructor(
@@ -53,13 +56,11 @@ export class MainScene extends Phaser.Scene {
     this.simulatorModel.placeholdersAdded.subscribe(p => this.onPlaceholdersAdded(p));
     this.simulatorModel.tilesAdded.subscribe(t => this.onTilesAdded(t));
     this.simulatorModel.tilesRemoved.subscribe(t => this.onTilesRemoved(t));
-
-    console.log(params.ITERATION_PHASE_DURATION)
+    this.simulatorModel.arcticCircleActiveChange.subscribe(s => this.setArcticCircleActiveState(s));
   }
 
 
   public preload() {
-
     this.iterationIndex = 0;
 
     this.load.setBaseURL('assets/img/');
@@ -76,6 +77,8 @@ export class MainScene extends Phaser.Scene {
     this.load.image('placeholderWhite', 'placeholder_white.png');
     this.load.image('gridCell', 'grid_cell.png');
 
+    this.camera = this.cameras.cameras[0];
+
     this.updateCamera();
   }
 
@@ -84,6 +87,14 @@ export class MainScene extends Phaser.Scene {
     this.gridLayer = this.add.layer().setDepth(0);
     this.placeholderLayer = this.add.layer().setDepth(50);
     this.tileLayer = this.add.layer().setDepth(100);
+    this.arcticCircleLayer = this.add.layer().setDepth(150);
+
+    this.arcticCircle = this.add.ellipse(0, 0, 2 * params.CELL_SIZE_PX, 2 * params.CELL_SIZE_PX);
+    this.arcticCircle.setAlpha(0);
+    this.arcticCircleLayer.add(this.arcticCircle);
+    this.setArcticCircleActiveState(
+      this.simulatorModel.getParams().isArcticCircleActive
+    );
   }
 
 
@@ -96,21 +107,62 @@ export class MainScene extends Phaser.Scene {
     });
 
     this.updateCamera();
+    this.updateArcticCircle();
   }
 
 
   private updateCamera() {
-    const camera = this.cameras.cameras[0];
-
     const fractionalIter = this.phase / params.ITERATION_PHASE_DURATION;
+
     const sceneSize = 2 * (1 + fractionalIter) * params.CELL_SIZE_PX;
-    const minScreenSize = Math.min(camera.width, camera.height);
+    const minScreenSize = Math.min(this.camera.width, this.camera.height);
     const paddingPixels = 3 * params.CELL_SIZE_PX;
 
     const zoom = minScreenSize / (sceneSize + paddingPixels);
 
-    camera.setZoom(zoom);
-    camera.setScroll(-camera.width / 2, -camera.height / 2);
+    this.camera.setZoom(zoom);
+    this.camera.setScroll(-this.camera.width / 2, -this.camera.height / 2);
+  }
+
+
+  private updateArcticCircle() {
+    /**
+     * When a random bias coefficient other than 0.5 (fair) is applied, the
+     * arctic circle seems to take, in general, the shape of an ellipse
+     * tangent to the sides of the diamond. The intersection point on each
+     * side is such that the segment is divided in two parts whose lengths
+     * have the same ratio as the probabilities of the two random outcomes.
+     *
+     * This is not proved but rather observed empirically by myself as a
+     * good fit for a large number of iterations. This is a personal
+     * hypothesis and haven't yet found any other information to support it.
+     *
+     * The width and height of the ellipse can be calculated by following
+     * a reasoning such as the one shown here:
+     * https://math.stackexchange.com/questions/1971097/what-are-the-axes-of-an-ellipse-within-a-rhombus
+     *
+     * Then, the intersection points are calculated as a function of the
+     * random bias coefficient, and finally the ellipse dimensions are obtained as:
+     *
+     *   width = 2 * sqrt ( 1 - (random bias coef) )
+     *   height = 2 * sqrt (random bias coef)
+     */
+    const fractionalIter = this.phase / params.ITERATION_PHASE_DURATION;
+
+    const k = Math.max(1, fractionalIter);
+    const randomBiasCoef = this.simulatorModel.getParams().randomBiasCoef;
+
+    const width = 2 * Math.sqrt(1 - randomBiasCoef) * k * params.CELL_SIZE_PX;
+    const height = 2 * Math.sqrt(randomBiasCoef) * k * params.CELL_SIZE_PX;
+
+    const minDisplaySize = Math.min(this.camera.displayWidth, this.camera.displayHeight);
+
+    this.arcticCircle.setSize(width, height);
+    this.arcticCircle.setPosition(
+      -width / 2 + params.CELL_SIZE_PX,
+      -height / 2 + params.CELL_SIZE_PX
+    );
+    this.arcticCircle.setStrokeStyle(minDisplaySize * 0.008, 0xFFFF00);
   }
 
 
@@ -152,7 +204,7 @@ export class MainScene extends Phaser.Scene {
       const img = this.add.image(pos.x, pos.y, 'placeholderWhite');
       img.setAlpha(0);
 
-      const specs = SIM_PHASE_STATE_TRANSITION_SPECS;
+      const specs = params.SIM_PHASE_STATE_TRANSITION_SPECS;
 
       const duration =
         (
@@ -173,7 +225,6 @@ export class MainScene extends Phaser.Scene {
       });
 
       this.placeholderLayer.add(img);
-
     });
   }
 
@@ -239,6 +290,25 @@ export class MainScene extends Phaser.Scene {
       });
 
       this.tiles.splice(index, 1);
+    });
+  }
+
+
+  private setArcticCircleActiveState(isActive: boolean) {
+
+    const fadeDuration = 2.5 * 1000 * this.getUnitPhaseDurationSecs();
+
+    const alpha = isActive
+      ? { from: this.arcticCircle.alpha, to: 1 }
+      : { from: this.arcticCircle.alpha, to: 0 };
+
+    this.tweens.add({
+      targets: this.arcticCircle,
+      alpha,
+      ease: 'Linear',
+      duration: fadeDuration,
+      repeat: 0,
+      yoyo: false,
     });
   }
 

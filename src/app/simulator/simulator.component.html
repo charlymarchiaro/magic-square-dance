@@ -4,7 +4,9 @@
     id="control-panel"
     [ngStyle]="controlPanelStyle">
 
-    <div id="simulation-speed">
+    <div
+      id="simulation-speed"
+      class="slider-field">
 
       <mat-label>Simul. speed:</mat-label>
       <mat-slider
@@ -12,12 +14,42 @@
         color="primary"
         [min]="minSimulationSpeed"
         [max]="maxSimulationSpeed"
-        step="0.1"
+        step="1"
         [value]="simulationSpeed"
         (change)="onSimulationSpeedSliderChange($event.value)"></mat-slider>
       <div>
         {{simulationSpeedSlider.value |number:'1.1'}}
       </div>
+    </div>
+
+    <div
+      id="random-bias-coef"
+      class="slider-field">
+
+      <mat-label>Random bias coefficient:</mat-label>
+      <mat-slider
+        #randomBiasCoefSlider
+        color="primary"
+        min="0"
+        max="1"
+        step="0.01"
+        [value]="randomBiasCoef"
+        (change)="onRandomBiasCoefSliderChange($event.value)"
+        (input)="onRandomBiasCoefSliderChange($event.value)"></mat-slider>
+      <div>
+        {{randomBiasCoefSlider.value |number:'1.2'}}
+      </div>
+    </div>
+
+    <div
+      id="arctic-circle"
+      class="checkbox-field">
+      <mat-checkbox
+        color="primary"
+        [checked]="isArcticCircleActive"
+        (change)="onArcticCircleCheckboxChange($event.checked)">
+        <mat-label>Show arctic circle</mat-label>
+      </mat-checkbox>
     </div>
 
   </div>

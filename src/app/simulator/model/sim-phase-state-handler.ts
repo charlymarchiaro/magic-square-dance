@@ -25,7 +25,9 @@ export class SimPhaseStateHandler {
 
     const currentStateSpec = SIM_PHASE_STATE_TRANSITION_SPECS[currentState];
 
-    if (elapsedPhase >= currentStateSpec.phaseDuration) {
+    const phaseDiff = elapsedPhase - currentStateSpec.phaseDuration;
+
+    if (phaseDiff >= 0) {
 
       // Elapsed phase is greater than duration --> state change
 
@@ -37,7 +39,7 @@ export class SimPhaseStateHandler {
 
       this.stateSubject.next(nextState);
 
-      this.lastTransitionPhase = phase;
+      this.lastTransitionPhase = phase - phaseDiff;
     }
   }
 }

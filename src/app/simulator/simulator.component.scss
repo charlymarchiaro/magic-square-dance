@@ -5,13 +5,29 @@
         padding: 10px 15px 10px 20px;
         box-sizing: border-box;
 
-        #simulation-speed {
+        .slider-field {
             display: flex;
             align-items: center;
+            font-size: 12px;
+            height: 48px;
 
+            mat-label {
+                max-width: 85px;
+                min-width: 85px;
+                text-align: left;
+            }
             .mat-slider {
                 margin: 0 10px;
+                min-width: 128px;
+                max-width: 128px;
             }
+        }
+
+        .checkbox-field {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            height: 48px;
         }
     }
 
