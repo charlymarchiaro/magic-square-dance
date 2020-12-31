@@ -9,6 +9,8 @@ _Magic Square Dance_ simulator, as described in the Mathologer video:
 
 # Implementation details
 
+![preview](https://raw.githubusercontent.com/charlymarchiaro/magic-square-dance/master/src/assets/preview/preview_1.png)
+
 ## Random generator bias coefficient and arctic circle generalization
 
 When a random bias coefficient other than 0.5 (fair) is applied, the arctic circle seems to take, in general, the shape of an ellipse tangent to the sides of the diamond. The intersection point on each side is such that the segment is divided in two parts whose lengths have the same ratio as the probabilities of the two random outcomes.
