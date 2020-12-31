@@ -17,7 +17,7 @@ This is not proved but rather observed empirically by myself as a good fit for a
 
 The width and height of the ellipse can be calculated by following a reasoning such as the one shown here: https://math.stackexchange.com/questions/1971097/what-are-the-axes-of-an-ellipse-within-a-rhombus
 
-Then, the intersection points are calculated as a function of the random bias coefficient, and finally the ellipse dimensions are obtained as:
+Then, the intersection points are calculated as a function of the random bias coefficient, and finally the (normalized) ellipse dimensions are obtained as:
 
     width = 2 * sqrt ( 1 - (random bias coef) )
     height = 2 * sqrt (random bias coef)
