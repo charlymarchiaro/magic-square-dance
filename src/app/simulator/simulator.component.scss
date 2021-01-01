@@ -1,9 +1,15 @@
+@import "/src/styles.scss";
+
+$container-height: calc(100vh - #{$toolbar-height});
+
 #container {
     display: flex;
 
     #control-panel {
+        height: $container-height;
         padding: 10px 15px 10px 20px;
         box-sizing: border-box;
+        overflow-y: auto;
 
         ::ng-deep .icon-button {
             .mat-icon {
