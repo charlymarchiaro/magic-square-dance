@@ -147,6 +147,9 @@ export class MainScene extends Phaser.Scene {
         repeat: 0,
         yoyo: false,
       });
+
+      // Add to layer
+      this.gridLayer.add(img);
     });
   }
 
