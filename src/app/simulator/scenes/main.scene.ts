@@ -4,6 +4,7 @@ import { TileDirection, Vector2 } from '../model/common';
 import * as params from '../params';
 import { TileModel } from '../model/tile.model';
 import { SimulatorTimer } from '../model/simulator-timer';
+import { Subscription } from 'rxjs';
 
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
@@ -55,19 +56,14 @@ export class MainScene extends Phaser.Scene {
   private displayMode: DisplayMode;
 
 
+  private modelSubscriptions = new Subscription();
+
+
   constructor(
     private simulatorModel: SimulatorModel,
     private simulatorTimer: SimulatorTimer,
   ) {
     super(sceneConfig);
-
-    this.simulatorModel.iterationStarted.subscribe(ii => this.onIterationStarted(ii));
-    this.simulatorModel.gridCellsAdded.subscribe(gc => this.onGridCellsAdded(gc));
-    this.simulatorModel.placeholdersAdded.subscribe(p => this.onPlaceholdersAdded(p));
-    this.simulatorModel.tilesAdded.subscribe(t => this.onTilesAdded(t));
-    this.simulatorModel.tilesRemoved.subscribe(t => this.onTilesRemoved(t));
-    this.simulatorModel.arcticCircleActiveChange.subscribe(s => this.setArcticCircleActiveState(s));
-    this.simulatorModel.displayModeChange.subscribe(m => this.setDisplayMode(m));
   }
 
 
@@ -111,10 +107,21 @@ export class MainScene extends Phaser.Scene {
 
     // Create dummy board
     this.createDummyBoard();
+
+    this.modelSubscriptions
+      .add(this.simulatorModel.iterationStarted.subscribe(ii => this.onIterationStarted(ii)))
+      .add(this.simulatorModel.gridCellsAdded.subscribe(gc => this.onGridCellsAdded(gc)))
+      .add(this.simulatorModel.placeholdersAdded.subscribe(p => this.onPlaceholdersAdded(p)))
+      .add(this.simulatorModel.tilesAdded.subscribe(t => this.onTilesAdded(t)))
+      .add(this.simulatorModel.tilesRemoved.subscribe(t => this.onTilesRemoved(t)))
+      .add(this.simulatorModel.arcticCircleActiveChange.subscribe(s => this.setArcticCircleActiveState(s)))
+      .add(this.simulatorModel.displayModeChange.subscribe(m => this.setDisplayMode(m)))
+      ;
   }
 
 
   public destroy(): void {
+    this.modelSubscriptions.unsubscribe();
     this.sys.game.destroy(true);
   }
 
