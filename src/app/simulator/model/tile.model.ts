@@ -91,7 +91,7 @@ export class TileModel {
   }
 
 
-  public startTransition(transition: BaseTileTransition) {
+  public startTransition(transition: BaseTileTransition): void {
     this.state = TileState.transitioning;
     this.transition = transition;
     this.destCenterPos = this.transition.start(
@@ -102,7 +102,7 @@ export class TileModel {
   }
 
 
-  public update(phase: number) {
+  public update(phase: number): void {
     this.phase = phase;
 
     if (this.state === TileState.transitioning) {

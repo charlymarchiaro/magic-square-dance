@@ -42,7 +42,7 @@ export abstract class BaseTileTransition {
 
   /**
    * Implement custom tile translation animation.
-   * A displacement of 1 unit corresponds to a 
+   * A displacement of 1 unit corresponds to a
    * phase change (transition phase) of 1.
    */
   protected abstract calcPositionImpl(transitionPhase: number): Vector2;

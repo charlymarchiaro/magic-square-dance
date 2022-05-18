@@ -54,7 +54,7 @@
           autocomplete="false"
           [value]="maxIterations"
           min="1"
-          (change)="onMaxIterationsChange($event.srcElement.value)">
+          (change)="onMaxIterationsChange($event.target.value)">
       </mat-form-field>
     </div>
 
@@ -69,7 +69,7 @@
           type="number"
           autocomplete="false"
           [value]="randomSeed"
-          (change)="onRandomSeedChange($event.srcElement.value)">
+          (change)="onRandomSeedChange($event.target.value)">
       </mat-form-field>
 
       <button
@@ -149,21 +149,21 @@
     <div id="about">
       <h1>About this project</h1>
       <p><i>Magic Square Dance</i> simulator, as described in this Mathologer <a
-          href="https://www.youtube.com/watch?v=Yy7Q8IWNfHM&ab_channel=Mathologer"
-          target="_blank">
-          video.
-        </a>
+        href="https://www.youtube.com/watch?v=Yy7Q8IWNfHM&ab_channel=Mathologer"
+        target="_blank">
+        video.
+      </a>
       </p>
       <p>Author: Carlos A. Marchiaro - <a
-          href="https://twitter.com/charlymarchiaro"
-          target="_blank">
-          @charlymarchiaro
-        </a></p>
+        href="https://twitter.com/charlymarchiaro"
+        target="_blank">
+        @charlymarchiaro
+      </a></p>
       <p>Github repository: <a
-          href="https://github.com/charlymarchiaro/magic-square-dance"
-          target="_blank">
-          magic-square-dance
-        </a></p>
+        href="https://github.com/charlymarchiaro/magic-square-dance"
+        target="_blank">
+        magic-square-dance
+      </a></p>
     </div>
   </div>
 

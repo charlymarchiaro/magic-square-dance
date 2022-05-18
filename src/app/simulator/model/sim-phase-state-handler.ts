@@ -1,6 +1,7 @@
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject } from 'rxjs';
 import { SimPhaseState } from './common';
 import { SIM_PHASE_STATES, SIM_PHASE_STATE_TRANSITION_SPECS } from '../params';
+
 
 export class SimPhaseStateHandler {
 
@@ -16,7 +17,7 @@ export class SimPhaseStateHandler {
   }
 
 
-  public update(phase: number) {
+  public update(phase: number): void {
     const elapsedPhase = phase - this.lastTransitionPhase;
 
     const currentState = this.stateSubject.getValue()

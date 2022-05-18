@@ -42,7 +42,6 @@ export class SimulatorComponent implements OnInit, OnDestroy {
   public displayMode: DisplayMode = DisplayMode.colors;
 
 
-
   public controlPanelStyle = {
     width: params.CONTROL_PANEL_WIDTH_PX,
   };
@@ -65,7 +64,8 @@ export class SimulatorComponent implements OnInit, OnDestroy {
     this.simulatorTimer.play();
   }
 
-  ngOnDestroy() {
+
+  ngOnDestroy(): void {
     this.modelSubscriptions.unsubscribe();
   }
 
@@ -78,23 +78,28 @@ export class SimulatorComponent implements OnInit, OnDestroy {
     this.playSimulation();
   }
 
+
   public onPauseClick(): void {
     this.pauseSimulation();
   }
 
+
   public onRestartClick(): void {
     this.restartSimulation();
   }
+
 
   public onRandomSeedChange(value: number): void {
     this.randomSeed = value;
     this.simulatorModel.setRandomSeed(value);
   }
 
+
   public onRegenerateRandomSeedClick(): void {
     this.regenerateRandomSeed();
     this.simulatorModel.setRandomSeed(this.randomSeed);
   }
+
 
   public onMaxIterationsChange(value: number): void {
     value = value < 1 ? 1 : value;
@@ -102,26 +107,29 @@ export class SimulatorComponent implements OnInit, OnDestroy {
     this.simulatorModel.setMaxIterations(value);
   }
 
+
   public onSimulationSpeedSliderChange(value: number): void {
     this.simulationSpeed = value;
     this.simulatorTimer.setSimulationSpeed(value);
   }
+
 
   public onRandomBiasCoefSliderChange(value: number): void {
     this.randomBiasCoef = value;
     this.simulatorModel.setRandomBiasCoef(value);
   }
 
+
   public onArcticCircleCheckboxChange(checked: boolean): void {
     this.isArcticCircleActive = checked;
     this.simulatorModel.setArcticCircleActiveState(checked);
   }
 
+
   public onDisplayModeChange(value: DisplayMode): void {
     this.displayMode = value;
     this.simulatorModel.setDisplayMode(value);
   }
-
 
 
   private regenerateRandomSeed(): void {
@@ -212,6 +220,7 @@ export class SimulatorComponent implements OnInit, OnDestroy {
     this.simulatorTimer.pause();
     this.isPlaying = false;
   }
+
 
   private restartSimulation(): void {
     this.initSimulation();

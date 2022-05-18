@@ -45,6 +45,9 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Angular cache
+.angular
+
 # Design
 .design
 
