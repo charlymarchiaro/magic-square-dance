@@ -52,9 +52,9 @@
           matInput
           type="number"
           autocomplete="false"
-          [value]="maxIterations"
+          [value]="maxIterations.toString()"
           min="1"
-          (change)="onMaxIterationsChange($event.target.value)">
+          (change)="onMaxIterationsChange($any($event.target).value)">
       </mat-form-field>
     </div>
 
@@ -68,8 +68,8 @@
           matInput
           type="number"
           autocomplete="false"
-          [value]="randomSeed"
-          (change)="onRandomSeedChange($event.target.value)">
+          [value]="randomSeed.toString()"
+          (change)="onRandomSeedChange($any($event.target).value)">
       </mat-form-field>
 
       <button
